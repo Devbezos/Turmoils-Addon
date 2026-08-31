@@ -20,18 +20,26 @@ end
 
 -- state shape: { running = boolean, startedAt = number|nil }
 --
--- Casting an apply spell (Echo) always (re)starts the timer, even if it was
--- already running - re-applying Echo means the old one no longer matters.
--- Casting a consume spell resets the timer to 0 only if one was actually
--- running; consuming with no Echo active is a no-op (nothing to reset).
+-- Casting an apply spell (Echo, Temporal Anomaly) starts the countdown only
+-- if nothing was already running - a second apply-class cast while one is
+-- already ticking is a deliberate no-op, not a restart. Restarting on every
+-- apply cast would let you keep the timer looking "fresh" forever without
+-- ever actually consuming it, which defeats the point.
+--
+-- Casting a consume spell resets the timer back to idle only if one was
+-- actually running; consuming with nothing active is a no-op (nothing to
+-- reset).
 --
 -- Returns: newState, event
---   event is one of "applied", "consumed", "consumed-idle", or nil (spell
---   was unrelated to Echo).
+--   event is one of "applied", "consumed", "consumed-idle", or nil (the
+--   spell was unrelated to Echo, or a redundant apply while already running).
 function Core.HandleSpellCast(state, spellID, now, spellSets)
     state = state or { running = false, startedAt = nil }
 
     if Core.IsApplySpell(spellID, spellSets) then
+        if state.running then
+            return state, nil
+        end
         return { running = true, startedAt = now }, "applied"
     end
 
@@ -45,24 +53,28 @@ function Core.HandleSpellCast(state, spellID, now, spellSets)
     return state, nil
 end
 
--- Seconds elapsed since the timer started; 0 while idle. Clamped at 0 so a
--- clock rollback (or a bad `now`) can never display a negative time.
-function Core.GetElapsed(state, now)
+-- Seconds left in the countdown; 0 while idle. Clamped to [0, duration] so a
+-- clock rollback (or the countdown simply running out because it was never
+-- consumed) can never display a negative or over-full time. Deliberately
+-- does NOT auto-expire back to idle at 0 - see HandleSpellCast above, only
+-- an actual consume clears it.
+function Core.GetRemaining(state, now, duration)
+    duration = duration or 20
     if not (state and state.running and state.startedAt) then return 0 end
-    local elapsed = now - state.startedAt
-    if elapsed < 0 then return 0 end
-    return elapsed
+    local remaining = duration - (now - state.startedAt)
+    if remaining < 0 then return 0 end
+    if remaining > duration then return duration end
+    return remaining
 end
 
 -- Cosmetic freshness tier used to color the timer: "fresh" -> "aging" ->
--- "stale". This is a nudge about how long Echo has sat un-consumed, not a
--- real buff countdown - the addon tracks casts, not the actual aura/target,
--- so it can't know the true remaining duration. staleThreshold defaults to
--- Echo's baseline 12s duration.
-function Core.GetFreshnessTier(elapsed, staleThreshold)
-    staleThreshold = staleThreshold or 12
-    if elapsed >= staleThreshold then return "stale" end
-    if elapsed >= staleThreshold * 0.66 then return "aging" end
+-- "stale" as the countdown runs low. This is a nudge about how much time is
+-- probably left, not a guaranteed buff countdown - the addon tracks casts,
+-- not the actual aura/target.
+function Core.GetFreshnessTier(remaining, duration)
+    duration = duration or 20
+    if remaining <= duration / 3 then return "stale" end
+    if remaining <= duration * 2 / 3 then return "aging" end
     return "fresh"
 end
 
