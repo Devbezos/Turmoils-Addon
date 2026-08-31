@@ -5,11 +5,13 @@
 --
 -- Deliberately cast-based, not aura-based: this watches *you pressing the
 -- button*, not whether the Echo buff is actually still sitting on a target.
--- That matches what was asked for (a timer that starts on the applying cast
--- and resets on the consuming cast) and sidesteps combat-log/aura latency
--- and multi-target ambiguity. The tradeoff: pressing a "consuming" spell
--- resets the timer even if nothing was actually echoed - see
--- EchoLogic.HandleSpellCast, which already no-ops that case when idle.
+-- That matches what was asked for (a timer that starts on the first applying
+-- cast and counts down until you consume it) and sidesteps combat-log/aura
+-- latency and multi-target ambiguity. Two tradeoffs, both intentional - see
+-- EchoLogic.HandleSpellCast: pressing a "consuming" spell resets the timer
+-- even if nothing was actually echoed (no-op'd when idle), and pressing an
+-- "applying" spell again while already running does NOT restart the
+-- countdown.
 local addonName = ...
 local Addon = _G[addonName]
 if not Addon then return end
@@ -33,9 +35,9 @@ local function ScheduleTick()
         tickPending = false
         if not Addon.echoState.running then return end
         if Addon.UpdateTimerDisplay then
-            local elapsed = Core.GetElapsed(Addon.echoState, GetTime())
-            local threshold = (Addon.db and Addon.db.global.staleThreshold) or 12
-            Addon:UpdateTimerDisplay(elapsed, Core.GetFreshnessTier(elapsed, threshold), true)
+            local duration = (Addon.db and Addon.db.global.echoDuration) or 20
+            local remaining = Core.GetRemaining(Addon.echoState, GetTime(), duration)
+            Addon:UpdateTimerDisplay(remaining, Core.GetFreshnessTier(remaining, duration), true)
         end
         ScheduleTick()
     end)

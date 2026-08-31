@@ -10,26 +10,26 @@ Test.case("constants file loads and publishes a global table", function()
     Test.truthy(type(_G.TurmoilsAddon_CONSTANTS) == "table")
 end)
 
-Test.case("Echo is classified as the apply spell", function()
-    local sets = {
+local function GetSpellSets()
+    return {
         apply = _G.TurmoilsAddon_CONSTANTS.applySpellIDs,
         consume = _G.TurmoilsAddon_CONSTANTS.consumeSpellIDs,
     }
+end
+
+Test.case("Echo and Temporal Anomaly are both classified as apply spells", function()
+    local sets = GetSpellSets()
     Test.truthy(Core.IsApplySpell(364343, sets), "Echo (364343) should apply")
+    Test.truthy(Core.IsApplySpell(373861, sets), "Temporal Anomaly (373861) should apply")
     Test.falsy(Core.IsConsumeSpell(364343, sets), "Echo should not also be a consume spell")
+    Test.falsy(Core.IsConsumeSpell(373861, sets), "Temporal Anomaly should not also be a consume spell")
 end)
 
-Test.case("all known Echo-consuming heals are classified as consume spells", function()
-    local sets = {
-        apply = _G.TurmoilsAddon_CONSTANTS.applySpellIDs,
-        consume = _G.TurmoilsAddon_CONSTANTS.consumeSpellIDs,
-    }
+Test.case("known Echo-consuming heals are classified as consume spells", function()
+    local sets = GetSpellSets()
     local expectedConsumers = {
         [355936] = "Dream Breath",
-        [367226] = "Spiritbloom",
         [360995] = "Verdant Embrace",
-        [355913] = "Emerald Blossom",
-        [373861] = "Temporal Anomaly",
         [361469] = "Living Flame",
     }
     for spellID, spellName in pairs(expectedConsumers) do
@@ -38,6 +38,21 @@ Test.case("all known Echo-consuming heals are classified as consume spells", fun
     end
 end)
 
+Test.case("Spiritbloom is not classified as anything (removed from the game)", function()
+    local sets = GetSpellSets()
+    Test.falsy(Core.IsApplySpell(367226, sets))
+    Test.falsy(Core.IsConsumeSpell(367226, sets))
+end)
+
+Test.case("Emerald Blossom no longer consumes Echo", function()
+    local sets = GetSpellSets()
+    Test.falsy(Core.IsConsumeSpell(355913, sets))
+end)
+
 Test.case("preservationSpecID matches the known Preservation spec ID", function()
     Test.equal(_G.TurmoilsAddon_CONSTANTS.preservationSpecID, 1468)
+end)
+
+Test.case("default echo duration is 20 seconds", function()
+    Test.equal(_G.TurmoilsAddon_CONSTANTS.defaults.global.echoDuration, 20)
 end)

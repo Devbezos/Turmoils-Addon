@@ -1,8 +1,9 @@
 -- TurmoilsAddon_TimerFrame.lua
 -- The little on-screen timer: a movable, lockable, scalable button that
--- shows time-since-Echo and a freshness bar, with a soft flash on apply and
--- on consume. Position/scale persist via LibWindow-1.1; lock state and
--- scale live in the AceDB SavedVariables.
+-- counts down from Addon.db.global.echoDuration and shows a shrinking
+-- freshness bar, with a soft flash on apply and on consume. Position/scale
+-- persist via LibWindow-1.1; lock state and scale live in the AceDB
+-- SavedVariables.
 local addonName = ...
 local Addon = _G[addonName]
 if not Addon then return end
@@ -43,8 +44,11 @@ function Addon:PlayEchoFlash(kind)
     frame:SetScript("OnUpdate", OnFlashUpdate)
 end
 
--- running == false means idle (elapsed is always 0 in that case).
-function Addon:UpdateTimerDisplay(elapsed, tier, running)
+-- running == false means idle (remaining is always 0 in that case).
+-- remaining counts DOWN from Addon.db.global.echoDuration to 0 and then
+-- holds there (it does not auto-reset - only an actual consume does that,
+-- see EchoLogic.HandleSpellCast).
+function Addon:UpdateTimerDisplay(remaining, tier, running)
     if not frame then return end
 
     if not running then
@@ -63,11 +67,11 @@ function Addon:UpdateTimerDisplay(elapsed, tier, running)
     frame:Show()
     frame:SetAlpha(1)
     local c = COLORS[tier] or COLORS.fresh
-    timeText:SetFormattedText("%.1fs", elapsed)
+    timeText:SetFormattedText("%.1fs", remaining)
     timeText:SetTextColor(c.r, c.g, c.b)
 
-    local threshold = self.db.global.staleThreshold or 12
-    local pct = math.min(1, elapsed / threshold)
+    local duration = self.db.global.echoDuration or 20
+    local pct = math.max(0, math.min(1, remaining / duration))
     local maxWidth = FRAME_WIDTH - 16
     barFill:SetWidth(math.max(0.001, pct * maxWidth))
     barFill:SetColorTexture(c.r, c.g, c.b, 0.9)
@@ -76,7 +80,7 @@ end
 -- Called by TurmoilsAddon_EchoTracker.lua whenever a cast changes Echo state.
 function Addon:OnEchoEvent(event)
     if event == "applied" then
-        self:UpdateTimerDisplay(0, "fresh", true)
+        self:UpdateTimerDisplay(self.db.global.echoDuration or 20, "fresh", true)
         self:PlayEchoFlash("fresh")
     elseif event == "consumed" then
         self:UpdateTimerDisplay(0, "fresh", false)
@@ -158,7 +162,7 @@ function Addon:EnsureTimerFrame()
     frame:SetScript("OnEnter", function(f)
         GameTooltip:SetOwner(f, "ANCHOR_TOP")
         GameTooltip:AddLine("Turmoil's Addon", 0.4, 0.9, 1)
-        GameTooltip:AddLine("Echo timer - starts on Echo, resets when you consume it.", 1, 1, 1)
+        GameTooltip:AddLine("Echo timer - counts down from your first Echo/Temporal Anomaly, resets when consumed.", 1, 1, 1)
         GameTooltip:AddLine(Addon.CONSTANTS.tooltipFlavorText, 1, 1, 1)
         GameTooltip:AddLine(" ")
         local dragHint = Addon.db.global.locked and "Frame is locked (unlock in options)." or "Left-drag to move."

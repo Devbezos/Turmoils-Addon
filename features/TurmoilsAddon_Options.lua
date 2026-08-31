@@ -115,8 +115,8 @@ function Addon:EnsureOptionsPanel()
     end)
 
     y = y - 44
-    CreateSlider(panel, "Stale after (seconds)", y, 6, 20, 1, self.db.global.staleThreshold or 12, function(v)
-        self.db.global.staleThreshold = v
+    CreateSlider(panel, "Echo duration (seconds)", y, 12, 25, 1, self.db.global.echoDuration or 20, function(v)
+        self.db.global.echoDuration = v
     end)
 
     y = y - 44

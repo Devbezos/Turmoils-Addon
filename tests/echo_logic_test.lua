@@ -2,31 +2,46 @@ local Test = _G.TA_TEST
 local Core = _G.TA_TEST_ADDON.EchoLogic
 
 local SPELL_SETS = {
-    apply = { [364343] = true },
-    consume = { [355936] = true, [367226] = true, [360995] = true },
+    apply = { [364343] = true, [373861] = true }, -- Echo, Temporal Anomaly
+    consume = { [355936] = true, [360995] = true }, -- Dream Breath, Verdant Embrace
 }
 
 Test.case("classifies apply and consume spells correctly", function()
     Test.truthy(Core.IsApplySpell(364343, SPELL_SETS))
+    Test.truthy(Core.IsApplySpell(373861, SPELL_SETS))
     Test.falsy(Core.IsApplySpell(355936, SPELL_SETS))
     Test.truthy(Core.IsConsumeSpell(355936, SPELL_SETS))
     Test.falsy(Core.IsConsumeSpell(364343, SPELL_SETS))
     Test.falsy(Core.IsConsumeSpell(99999, SPELL_SETS))
 end)
 
-Test.case("casting Echo starts the timer", function()
+Test.case("casting Echo while idle starts the countdown", function()
     local state, event = Core.HandleSpellCast({ running = false }, 364343, 100, SPELL_SETS)
     Test.equal(event, "applied")
     Test.truthy(state.running)
     Test.equal(state.startedAt, 100)
 end)
 
-Test.case("re-casting Echo while running restarts the timer at the new time", function()
-    local running = { running = true, startedAt = 100 }
-    local state, event = Core.HandleSpellCast(running, 364343, 108, SPELL_SETS)
+Test.case("casting Temporal Anomaly while idle also starts the countdown", function()
+    local state, event = Core.HandleSpellCast({ running = false }, 373861, 100, SPELL_SETS)
     Test.equal(event, "applied")
     Test.truthy(state.running)
-    Test.equal(state.startedAt, 108)
+    Test.equal(state.startedAt, 100)
+end)
+
+Test.case("re-casting an apply spell while already running is a no-op, not a restart", function()
+    local running = { running = true, startedAt = 100 }
+    local state, event = Core.HandleSpellCast(running, 364343, 108, SPELL_SETS)
+    Test.equal(event, nil)
+    Test.equal(state, running)
+    Test.equal(state.startedAt, 100, "startedAt must not move")
+end)
+
+Test.case("casting the other apply spell while already running is also a no-op", function()
+    local running = { running = true, startedAt = 100 }
+    local state, event = Core.HandleSpellCast(running, 373861, 108, SPELL_SETS)
+    Test.equal(event, nil)
+    Test.equal(state.startedAt, 100)
 end)
 
 Test.case("a consume spell resets a running timer to idle", function()
@@ -39,7 +54,7 @@ end)
 
 Test.case("a consume spell with no Echo running is a no-op", function()
     local idle = { running = false, startedAt = nil }
-    local state, event = Core.HandleSpellCast(idle, 367226, 106, SPELL_SETS)
+    local state, event = Core.HandleSpellCast(idle, 360995, 106, SPELL_SETS)
     Test.equal(event, "consumed-idle")
     Test.falsy(state.running)
     Test.equal(state, idle, "idle state table should be returned unchanged")
@@ -58,26 +73,31 @@ Test.case("HandleSpellCast tolerates a nil starting state", function()
     Test.equal(state.startedAt, 50)
 end)
 
-Test.case("GetElapsed is 0 while idle", function()
-    Test.equal(Core.GetElapsed({ running = false }, 500), 0)
-    Test.equal(Core.GetElapsed(nil, 500), 0)
+Test.case("GetRemaining is 0 while idle", function()
+    Test.equal(Core.GetRemaining({ running = false }, 500, 20), 0)
+    Test.equal(Core.GetRemaining(nil, 500, 20), 0)
 end)
 
-Test.case("GetElapsed reports seconds since start while running", function()
-    Test.equal(Core.GetElapsed({ running = true, startedAt = 100 }, 104.5), 4.5)
+Test.case("GetRemaining counts down from the full duration", function()
+    Test.equal(Core.GetRemaining({ running = true, startedAt = 100 }, 100, 20), 20)
+    Test.equal(Core.GetRemaining({ running = true, startedAt = 100 }, 105.5, 20), 14.5)
 end)
 
-Test.case("GetElapsed clamps negative durations to 0", function()
-    Test.equal(Core.GetElapsed({ running = true, startedAt = 100 }, 90), 0)
+Test.case("GetRemaining clamps to 0 once the duration has fully elapsed (no auto-reset)", function()
+    Test.equal(Core.GetRemaining({ running = true, startedAt = 100 }, 130, 20), 0)
 end)
 
-Test.case("GetFreshnessTier moves fresh -> aging -> stale", function()
-    Test.equal(Core.GetFreshnessTier(0, 12), "fresh")
-    Test.equal(Core.GetFreshnessTier(7, 12), "fresh")
-    Test.equal(Core.GetFreshnessTier(8, 12), "aging")
-    Test.equal(Core.GetFreshnessTier(11.9, 12), "aging")
-    Test.equal(Core.GetFreshnessTier(12, 12), "stale")
-    Test.equal(Core.GetFreshnessTier(30, 12), "stale")
+Test.case("GetRemaining clamps to the duration if `now` is before startedAt", function()
+    Test.equal(Core.GetRemaining({ running = true, startedAt = 100 }, 90, 20), 20)
+end)
+
+Test.case("GetFreshnessTier moves fresh -> aging -> stale as time runs out", function()
+    Test.equal(Core.GetFreshnessTier(20, 20), "fresh")
+    Test.equal(Core.GetFreshnessTier(14, 20), "fresh")
+    Test.equal(Core.GetFreshnessTier(13, 20), "aging")
+    Test.equal(Core.GetFreshnessTier(6.7, 20), "aging")
+    Test.equal(Core.GetFreshnessTier(6.6, 20), "stale")
+    Test.equal(Core.GetFreshnessTier(0, 20), "stale")
 end)
 
 Test.case("ShouldBeActive is only true for a Preservation Evoker", function()

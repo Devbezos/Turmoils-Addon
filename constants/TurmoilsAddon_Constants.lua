@@ -8,21 +8,24 @@
 -- If Blizzard ever renumbers these spells, this is the one file to edit.
 
 TurmoilsAddon_CONSTANTS = {
-    -- Echo (364343): the spell that applies the "Echo" buff to a friendly
-    -- target. Casting it (successfully) starts the timer.
+    -- Spells that start the countdown. Casting either of these while the
+    -- timer is already running is a no-op - it does not restart it.
     applySpellIDs = {
         [364343] = true, -- Echo
+        [373861] = true, -- Temporal Anomaly
     },
 
-    -- Preservation Evoker heals that consume an active Echo when they land
-    -- on the echoed target. Casting any of these (successfully) resets the
-    -- timer back to 0.
+    -- Preservation Evoker heals that consume an active Echo and reset the
+    -- countdown back to idle.
+    --
+    -- TODO: Reversion and Merithra's Blessing also consume Echo but their
+    -- spell IDs haven't been confirmed yet - add them here once known
+    -- (e.g. via /dump C_Spell.GetSpellInfo("Reversion") in-game, or
+    -- Wowhead). Guessing a wrong ID would silently misclassify whatever
+    -- spell that ID actually belongs to, so leaving them out for now.
     consumeSpellIDs = {
         [355936] = true, -- Dream Breath
-        [367226] = true, -- Spiritbloom
         [360995] = true, -- Verdant Embrace
-        [355913] = true, -- Emerald Blossom
-        [373861] = true, -- Temporal Anomaly
         [361469] = true, -- Living Flame
     },
 
@@ -36,7 +39,7 @@ TurmoilsAddon_CONSTANTS = {
             scale = 1.0,
             autoHideWhenIdle = false,
             soundOnConsume = false,
-            staleThreshold = 12, -- seconds; cosmetic freshness hint only, see EchoTracker header
+            echoDuration = 20, -- seconds; the countdown starts here and only resets on an actual consume
         },
     },
 
