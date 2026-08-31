@@ -1,0 +1,11 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.tmp
+.vscode/
+
+# Lua bytecode, in case luac -o gets run by accident
+*.luac
+
+# SavedVariables copied out of a live WoW install for debugging
+*.lua.bak

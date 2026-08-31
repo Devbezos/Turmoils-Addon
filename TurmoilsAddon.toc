@@ -1,0 +1,25 @@
+## Interface: 120100, 120007, 120005
+## Title: Turmoil's Addon
+## Notes: Starts a timer when you cast Echo, resets it to 0 when you consume it. Made for a Preservation Evoker.
+## Author: A guildmate
+## Version: 1.0.0
+## SavedVariables: TurmoilsAddonDB
+
+# Libraries
+lib\LibStub\LibStub.lua
+lib\CallbackHandler-1.0\CallbackHandler-1.0.lua
+lib\Ace3\AceAddon-3.0\AceAddon-3.0.lua
+lib\Ace3\AceEvent-3.0\AceEvent-3.0.lua
+lib\Ace3\AceDB-3.0\AceDB-3.0.lua
+lib\Ace3\AceConsole-3.0\AceConsole-3.0.lua
+lib\LibWindow-1.1\LibWindow-1.1.lua
+
+# Core
+constants\TurmoilsAddon_Constants.lua
+TurmoilsAddon.lua
+core\TurmoilsAddon_EchoLogic.lua
+
+# Feature modules (must follow core)
+features\TurmoilsAddon_EchoTracker.lua
+features\TurmoilsAddon_TimerFrame.lua
+features\TurmoilsAddon_Options.lua
