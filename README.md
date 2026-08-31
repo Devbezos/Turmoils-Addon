@@ -5,11 +5,16 @@ A tiny World of Warcraft addon for Preservation Evokers: the moment you cast
 in options). Casting either one again while it's already running does
 *nothing* - it does not restart the clock. The countdown only clears back to
 idle when you actually consume it with **Dream Breath**, **Verdant
-Embrace**, a healing **Living Flame**, **Reversion**, or **Merithra's
-Blessing**. If it's never consumed, it holds at `0` - visibly red - rather
-than quietly resetting itself, since the whole point is to notice a wasted
-Echo, not paper over it. A thin bar underneath the number shrinks from
-green to amber to red as time runs out.
+Embrace**, **Reversion**, or **Merithra's Blessing**. If it's never
+consumed, it holds at `0` - visibly red - rather than quietly resetting
+itself, since the whole point is to notice a wasted Echo, not paper over
+it. A thin bar underneath the number shrinks from green to amber to red as
+time runs out.
+
+(Living Flame deliberately doesn't count as a consume, even though it can
+also consume Echo as a heal - it's the same spell ID whether cast
+offensively or as a heal, and it's pressed offensively far more often, so
+including it meant the timer kept getting reset by damage casts.)
 
 It only ever activates while you're actually playing Preservation - it stays
 completely invisible on every other class and spec.
@@ -18,8 +23,10 @@ completely invisible on every other class and spec.
 
 - The frame is draggable by default: left-click-drag to move it.
 - Right-click it (or run `/turmoil`) to open the options panel: lock
-  position, scale, hide-when-idle, a sound on consume, and the countdown
-  duration.
+  position, width/height, scale, hide-when-idle, a sound on consume, and
+  the countdown duration. Width/height and scale are independent - resize
+  it to fit a tight spot without the border/font scaling along with it, or
+  use scale to just magnify the whole thing uniformly.
 - `/turmoil lock`, `/turmoil unlock`, `/turmoil reset` also work directly.
 
 ## How it works

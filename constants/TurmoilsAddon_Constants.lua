@@ -17,10 +17,14 @@ TurmoilsAddon_CONSTANTS = {
 
     -- Preservation Evoker heals that consume an active Echo and reset the
     -- countdown back to idle.
+    --
+    -- Living Flame (361469) is deliberately NOT here: it's the same spell ID
+    -- whether cast offensively or as a heal, and it's pressed offensively
+    -- far more often, so including it meant the timer kept getting reset by
+    -- damage casts rather than real Echo consumption.
     consumeSpellIDs = {
         [355936] = true,  -- Dream Breath
         [360995] = true,  -- Verdant Embrace
-        [361469] = true,  -- Living Flame
         [366155] = true,  -- Reversion
         [1256581] = true, -- Merithra's Blessing
     },
@@ -43,6 +47,8 @@ TurmoilsAddon_CONSTANTS = {
             firstRunSeen = false,
             locked = false,
             scale = 1.0,
+            frameWidth = 132,
+            frameHeight = 54,
             autoHideWhenIdle = false,
             soundOnConsume = false,
             echoDuration = 20, -- seconds; the countdown starts here and only resets on an actual consume

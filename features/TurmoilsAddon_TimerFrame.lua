@@ -1,14 +1,18 @@
 -- TurmoilsAddon_TimerFrame.lua
--- The little on-screen timer: a movable, lockable, scalable button that
--- counts down from Addon.db.global.echoDuration and shows a shrinking
--- freshness bar, with a soft flash on apply and on consume. Position/scale
--- persist via LibWindow-1.1; lock state and scale live in the AceDB
--- SavedVariables.
+-- The little on-screen timer: a movable, lockable, resizable, scalable
+-- button that counts down from Addon.db.global.echoDuration and shows a
+-- shrinking freshness bar, with a soft flash on apply and on consume.
+-- Position/scale persist via LibWindow-1.1; lock state, size, and scale
+-- live in the AceDB SavedVariables. Width/height and scale are independent
+-- controls (see Options: "Width"/"Height" vs "Scale") - size changes the
+-- frame's actual footprint (useful when slotting it next to other UI where
+-- scaling everything, including the border/font, doesn't fit), while scale
+-- just magnifies the whole thing uniformly.
 local addonName = ...
 local Addon = _G[addonName]
 if not Addon then return end
 
-local FRAME_WIDTH, FRAME_HEIGHT = 132, 54
+local DEFAULT_FRAME_WIDTH, DEFAULT_FRAME_HEIGHT = 132, 54
 local FLASH_DURATION = 0.35
 
 local COLORS = {
@@ -72,7 +76,7 @@ function Addon:UpdateTimerDisplay(remaining, tier, running)
 
     local duration = self.db.global.echoDuration or 20
     local pct = math.max(0, math.min(1, remaining / duration))
-    local maxWidth = FRAME_WIDTH - 16
+    local maxWidth = (frame:GetWidth() or DEFAULT_FRAME_WIDTH) - 16
     barFill:SetWidth(math.max(0.001, pct * maxWidth))
     barFill:SetColorTexture(c.r, c.g, c.b, 0.9)
 end
@@ -97,7 +101,10 @@ function Addon:EnsureTimerFrame()
     if frame then return frame end
 
     frame = CreateFrame("Button", "TurmoilsAddonTimerFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(FRAME_WIDTH, FRAME_HEIGHT)
+    frame:SetSize(
+        self.db.global.frameWidth or DEFAULT_FRAME_WIDTH,
+        self.db.global.frameHeight or DEFAULT_FRAME_HEIGHT
+    )
     frame:SetFrameStrata("MEDIUM")
     frame:SetClampedToScreen(true)
     frame:SetBackdrop({
@@ -192,6 +199,17 @@ function Addon:SetFrameScale(scale)
     scale = tonumber(scale) or 1
     self.db.global.scale = scale
     if frame then frame:SetScale(scale) end
+end
+
+-- Width/height in pixels, independent of scale. Clamped generously (well
+-- past the options-panel slider's own range) as a defensive floor/ceiling
+-- against a corrupted SavedVariables value.
+function Addon:SetFrameSize(width, height)
+    width = math.max(60, math.min(400, tonumber(width) or DEFAULT_FRAME_WIDTH))
+    height = math.max(24, math.min(200, tonumber(height) or DEFAULT_FRAME_HEIGHT))
+    self.db.global.frameWidth = width
+    self.db.global.frameHeight = height
+    if frame then frame:SetSize(width, height) end
 end
 
 function Addon:ResetFramePosition()

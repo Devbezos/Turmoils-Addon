@@ -8,7 +8,7 @@ local addonName = ...
 local Addon = _G[addonName]
 if not Addon then return end
 
-local PANEL_WIDTH, PANEL_HEIGHT = 260, 320
+local PANEL_WIDTH, PANEL_HEIGHT = 260, 400
 
 local panel
 
@@ -134,6 +134,16 @@ function Addon:EnsureOptionsPanel()
     end)
 
     y = y - 36
+    CreateSlider(panel, "Width", y, 80, 260, 2, self.db.global.frameWidth or 132, function(v)
+        self:SetFrameSize(v, self.db.global.frameHeight or 54)
+    end)
+
+    y = y - 44
+    CreateSlider(panel, "Height", y, 36, 100, 2, self.db.global.frameHeight or 54, function(v)
+        self:SetFrameSize(self.db.global.frameWidth or 132, v)
+    end)
+
+    y = y - 44
     CreateSlider(panel, "Scale", y, 0.6, 2.0, 0.05, self.db.global.scale or 1, function(v)
         self:SetFrameScale(v)
     end)

@@ -30,7 +30,6 @@ Test.case("known Echo-consuming heals are classified as consume spells", functio
     local expectedConsumers = {
         [355936] = "Dream Breath",
         [360995] = "Verdant Embrace",
-        [361469] = "Living Flame",
         [366155] = "Reversion",
         [1256581] = "Merithra's Blessing",
     }
@@ -38,6 +37,12 @@ Test.case("known Echo-consuming heals are classified as consume spells", functio
         Test.truthy(Core.IsConsumeSpell(spellID, sets), spellName .. " (" .. spellID .. ") should consume Echo")
         Test.falsy(Core.IsApplySpell(spellID, sets), spellName .. " should not also apply Echo")
     end
+end)
+
+Test.case("Living Flame is deliberately not a consume spell (mostly pressed offensively)", function()
+    local sets = GetSpellSets()
+    Test.falsy(Core.IsConsumeSpell(361469, sets))
+    Test.falsy(Core.IsApplySpell(361469, sets))
 end)
 
 Test.case("Spiritbloom is not classified as anything (removed from the game)", function()
@@ -61,4 +66,9 @@ end)
 
 Test.case("Dream Breath is flagged as an empower-type spell", function()
     Test.truthy(_G.TurmoilsAddon_CONSTANTS.empowerSpellIDs[355936])
+end)
+
+Test.case("default frame size is 132x54", function()
+    Test.equal(_G.TurmoilsAddon_CONSTANTS.defaults.global.frameWidth, 132)
+    Test.equal(_G.TurmoilsAddon_CONSTANTS.defaults.global.frameHeight, 54)
 end)
