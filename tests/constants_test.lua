@@ -32,7 +32,7 @@ Test.case("known Echo-consuming heals are classified as consume spells", functio
         [360995] = "Verdant Embrace",
         [361469] = "Living Flame",
         [366155] = "Reversion",
-        [1256689] = "Merithra's Blessing",
+        [1256581] = "Merithra's Blessing",
     }
     for spellID, spellName in pairs(expectedConsumers) do
         Test.truthy(Core.IsConsumeSpell(spellID, sets), spellName .. " (" .. spellID .. ") should consume Echo")
@@ -57,4 +57,8 @@ end)
 
 Test.case("default echo duration is 20 seconds", function()
     Test.equal(_G.TurmoilsAddon_CONSTANTS.defaults.global.echoDuration, 20)
+end)
+
+Test.case("Dream Breath is flagged as an empower-type spell", function()
+    Test.truthy(_G.TurmoilsAddon_CONSTANTS.empowerSpellIDs[355936])
 end)

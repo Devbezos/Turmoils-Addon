@@ -1,8 +1,8 @@
 -- Exercises TurmoilsAddon_EchoTracker.lua's WoW-facing glue: event
--- registration, filtering by unit, and the polling tick it schedules while
--- the countdown is running. The state-machine decisions themselves are
--- covered exhaustively in echo_logic_test.lua - this file is about the
--- wiring.
+-- registration, filtering by unit, the Empower-spell routing quirk, and the
+-- polling tick it schedules while the countdown is running. The
+-- state-machine decisions themselves are covered exhaustively in
+-- echo_logic_test.lua - this file is about the wiring.
 local Test = _G.TA_TEST
 local Harness = _G.TA_HARNESS
 
@@ -10,7 +10,8 @@ local addonName = "TA_TRACKER_TEST_ADDON"
 local Addon = {
     CONSTANTS = {
         applySpellIDs = { [364343] = true, [373861] = true }, -- Echo, Temporal Anomaly
-        consumeSpellIDs = { [355936] = true }, -- Dream Breath
+        consumeSpellIDs = { [355936] = true, [360995] = true }, -- Dream Breath (empower), Verdant Embrace
+        empowerSpellIDs = { [355936] = true }, -- Dream Breath
     },
     echoState = { running = false, startedAt = nil },
     db = { global = { echoDuration = 20 } },
@@ -32,8 +33,9 @@ Harness.load(addonName, "features/TurmoilsAddon_EchoTracker.lua")
 Addon:ActivateTracking()
 local trackingFrame = Harness.findFrameWithEvent("UNIT_SPELLCAST_SUCCEEDED")
 
-Test.case("ActivateTracking registers an OnEvent listener for spell casts", function()
+Test.case("ActivateTracking registers listeners for both cast-succeeded and empower-stop", function()
     Test.truthy(trackingFrame, "expected a frame registered for UNIT_SPELLCAST_SUCCEEDED")
+    Test.truthy(trackingFrame:IsEventRegistered("UNIT_SPELLCAST_EMPOWER_STOP"))
 end)
 
 Test.case("casting Echo as the player starts the 20s countdown and fires 'applied'", function()
@@ -57,13 +59,6 @@ Test.case("casting Temporal Anomaly while already running does not restart the c
     Test.equal(#echoEvents, eventCountBefore, "a redundant apply cast should not fire an event")
 end)
 
-Test.case("re-casting Echo itself while already running is also a no-op", function()
-    local eventCountBefore = #echoEvents
-    trackingFrame:Fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid-4", 364343)
-    Test.equal(Addon.echoState.startedAt, 1000)
-    Test.equal(#echoEvents, eventCountBefore)
-end)
-
 Test.case("the scheduled tick counts down and updates the display while running", function()
     Test.truthy(#Harness.timers > 0, "expected a pending tick after 'applied'")
     Harness.advanceTime(0.1)
@@ -77,13 +72,31 @@ end)
 Test.case("an unrelated spell cast does not touch state or fire an event", function()
     local before = Addon.echoState.running
     local eventCountBefore = #echoEvents
-    trackingFrame:Fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid-5", 99999)
+    trackingFrame:Fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid-4", 99999)
     Test.equal(Addon.echoState.running, before)
     Test.equal(#echoEvents, eventCountBefore)
 end)
 
-Test.case("casting the consume spell resets the timer and fires 'consumed'", function()
-    trackingFrame:Fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid-6", 355936)
+Test.case("UNIT_SPELLCAST_SUCCEEDED for an empower spell (Dream Breath) is ignored entirely", function()
+    -- This is the bug being fixed: WoW fires SUCCEEDED the instant the
+    -- empower channel *starts*, not on release, so it must not consume.
+    local before = Addon.echoState.running
+    local eventCountBefore = #echoEvents
+    trackingFrame:Fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid-5", 355936)
+    Test.equal(Addon.echoState.running, before, "SUCCEEDED must not reset the timer for an empower spell")
+    Test.equal(#echoEvents, eventCountBefore)
+end)
+
+Test.case("EMPOWER_STOP with deployed=false (canceled) does not consume", function()
+    local before = Addon.echoState.running
+    local eventCountBefore = #echoEvents
+    trackingFrame:Fire("UNIT_SPELLCAST_EMPOWER_STOP", "player", "guid-5", 355936, false)
+    Test.equal(Addon.echoState.running, before)
+    Test.equal(#echoEvents, eventCountBefore)
+end)
+
+Test.case("EMPOWER_STOP with deployed=true (released) resets the timer and fires 'consumed'", function()
+    trackingFrame:Fire("UNIT_SPELLCAST_EMPOWER_STOP", "player", "guid-6", 355936, true)
     Test.falsy(Addon.echoState.running)
     Test.equal(echoEvents[#echoEvents], "consumed")
 end)
@@ -94,7 +107,7 @@ Test.case("the tick loop stops rescheduling once the timer is idle again", funct
 end)
 
 Test.case("consuming again with nothing running fires 'consumed-idle', not 'consumed'", function()
-    trackingFrame:Fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid-7", 355936)
+    trackingFrame:Fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid-7", 360995)
     Test.equal(echoEvents[#echoEvents], "consumed-idle")
 end)
 
@@ -106,8 +119,15 @@ Test.case("casting Echo again after a consume starts a brand new countdown", fun
     Test.equal(echoEvents[#echoEvents], "applied")
 end)
 
+Test.case("a non-empower consume spell (Verdant Embrace) still works via plain SUCCEEDED", function()
+    trackingFrame:Fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid-9", 360995)
+    Test.falsy(Addon.echoState.running)
+    Test.equal(echoEvents[#echoEvents], "consumed")
+end)
+
 Test.case("DeactivateTracking unregisters events and clears state", function()
     Addon:DeactivateTracking()
     Test.falsy(trackingFrame:IsEventRegistered("UNIT_SPELLCAST_SUCCEEDED"))
+    Test.falsy(trackingFrame:IsEventRegistered("UNIT_SPELLCAST_EMPOWER_STOP"))
     Test.falsy(Addon.echoState.running)
 end)

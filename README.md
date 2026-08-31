@@ -33,6 +33,13 @@ resets the timer even if nothing was actually echoed (harmless - resetting
 an idle timer is a no-op), and pressing an "applying" spell again while
 already running does not restart the countdown.
 
+Dream Breath needs one more wrinkle: it's an Empower spell (hold to charge,
+release to cast), and WoW fires `UNIT_SPELLCAST_SUCCEEDED` for it the
+instant the empower *starts*, not when you release it - a client quirk, not
+a bug here. `constants.empowerSpellIDs` flags spells like this so the
+tracker ignores `SUCCEEDED` for them and instead uses
+`UNIT_SPELLCAST_EMPOWER_STOP`, which fires on release/completion.
+
 ```
 core/TurmoilsAddon_EchoLogic.lua      <- pure state machine, zero WoW API calls
 features/TurmoilsAddon_EchoTracker.lua <- WoW glue: registers the cast event, drives EchoLogic

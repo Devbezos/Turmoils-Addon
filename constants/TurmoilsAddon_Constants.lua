@@ -22,7 +22,17 @@ TurmoilsAddon_CONSTANTS = {
         [360995] = true,  -- Verdant Embrace
         [361469] = true,  -- Living Flame
         [366155] = true,  -- Reversion
-        [1256689] = true, -- Merithra's Blessing
+        [1256581] = true, -- Merithra's Blessing
+    },
+
+    -- Empower-type spells (hold-to-charge, release to cast): WoW fires
+    -- UNIT_SPELLCAST_SUCCEEDED for these the moment the empower *starts*,
+    -- not when it's actually released - a known client quirk, not a bug in
+    -- this addon. TurmoilsAddon_EchoTracker.lua uses this set to route these
+    -- specific spells through UNIT_SPELLCAST_EMPOWER_STOP instead, so the
+    -- countdown resets on cast completion, not on button press.
+    empowerSpellIDs = {
+        [355936] = true, -- Dream Breath
     },
 
     -- Preservation is spec index/ID 1468 (Devastation 1467, Augmentation 1473).
