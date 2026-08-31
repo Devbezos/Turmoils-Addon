@@ -5,11 +5,11 @@ A tiny World of Warcraft addon for Preservation Evokers: the moment you cast
 in options). Casting either one again while it's already running does
 *nothing* - it does not restart the clock. The countdown only clears back to
 idle when you actually consume it with **Dream Breath**, **Verdant
-Embrace**, or a healing **Living Flame** (see [Known gaps](#known-gaps) for
-two more that still need spell IDs). If it's never consumed, it holds at
-`0` - visibly red - rather than quietly resetting itself, since the whole
-point is to notice a wasted Echo, not paper over it. A thin bar underneath
-the number shrinks from green to amber to red as time runs out.
+Embrace**, a healing **Living Flame**, **Reversion**, or **Merithra's
+Blessing**. If it's never consumed, it holds at `0` - visibly red - rather
+than quietly resetting itself, since the whole point is to notice a wasted
+Echo, not paper over it. A thin bar underneath the number shrinks from
+green to amber to red as time runs out.
 
 It only ever activates while you're actually playing Preservation - it stays
 completely invisible on every other class and spec.
@@ -21,13 +21,6 @@ completely invisible on every other class and spec.
   position, scale, hide-when-idle, a sound on consume, and the countdown
   duration.
 - `/turmoil lock`, `/turmoil unlock`, `/turmoil reset` also work directly.
-
-## Known gaps
-
-`constants/TurmoilsAddon_Constants.lua` is missing spell IDs for two more
-Echo-consuming heals, **Reversion** and **Merithra's Blessing** - add them to
-`consumeSpellIDs` once you have the numeric IDs (in-game:
-`/dump C_Spell.GetSpellInfo("Reversion")`, or look the spell up on Wowhead).
 
 ## How it works
 

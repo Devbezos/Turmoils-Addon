@@ -17,16 +17,12 @@ TurmoilsAddon_CONSTANTS = {
 
     -- Preservation Evoker heals that consume an active Echo and reset the
     -- countdown back to idle.
-    --
-    -- TODO: Reversion and Merithra's Blessing also consume Echo but their
-    -- spell IDs haven't been confirmed yet - add them here once known
-    -- (e.g. via /dump C_Spell.GetSpellInfo("Reversion") in-game, or
-    -- Wowhead). Guessing a wrong ID would silently misclassify whatever
-    -- spell that ID actually belongs to, so leaving them out for now.
     consumeSpellIDs = {
-        [355936] = true, -- Dream Breath
-        [360995] = true, -- Verdant Embrace
-        [361469] = true, -- Living Flame
+        [355936] = true,  -- Dream Breath
+        [360995] = true,  -- Verdant Embrace
+        [361469] = true,  -- Living Flame
+        [367364] = true,  -- Reversion
+        [1256577] = true, -- Merithra's Blessing
     },
 
     -- Preservation is spec index/ID 1468 (Devastation 1467, Augmentation 1473).
