@@ -21,8 +21,8 @@ TurmoilsAddon_CONSTANTS = {
         [355936] = true,  -- Dream Breath
         [360995] = true,  -- Verdant Embrace
         [361469] = true,  -- Living Flame
-        [367364] = true,  -- Reversion
-        [1256577] = true, -- Merithra's Blessing
+        [366155] = true,  -- Reversion
+        [1256689] = true, -- Merithra's Blessing
     },
 
     -- Preservation is spec index/ID 1468 (Devastation 1467, Augmentation 1473).

@@ -31,8 +31,8 @@ Test.case("known Echo-consuming heals are classified as consume spells", functio
         [355936] = "Dream Breath",
         [360995] = "Verdant Embrace",
         [361469] = "Living Flame",
-        [367364] = "Reversion",
-        [1256577] = "Merithra's Blessing",
+        [366155] = "Reversion",
+        [1256689] = "Merithra's Blessing",
     }
     for spellID, spellName in pairs(expectedConsumers) do
         Test.truthy(Core.IsConsumeSpell(spellID, sets), spellName .. " (" .. spellID .. ") should consume Echo")
