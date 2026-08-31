@@ -72,3 +72,7 @@ Test.case("default frame size is 132x54", function()
     Test.equal(_G.TurmoilsAddon_CONSTANTS.defaults.global.frameWidth, 132)
     Test.equal(_G.TurmoilsAddon_CONSTANTS.defaults.global.frameHeight, 54)
 end)
+
+Test.case("hide-out-of-combat defaults to off", function()
+    Test.equal(_G.TurmoilsAddon_CONSTANTS.defaults.global.hideOutOfCombat, false)
+end)

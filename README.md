@@ -23,8 +23,8 @@ completely invisible on every other class and spec.
 
 - The frame is draggable by default: left-click-drag to move it.
 - Right-click it (or run `/turmoil`) to open the options panel: lock
-  position, width/height, scale, hide-when-idle, a sound on consume, and
-  the countdown duration. Width/height and scale are independent - resize
+  position, width/height, scale, hide out of combat, a sound on consume,
+  and the countdown duration. Width/height and scale are independent - resize
   it to fit a tight spot without the border/font scaling along with it, or
   use scale to just magnify the whole thing uniformly.
 - `/turmoil lock`, `/turmoil unlock`, `/turmoil reset` also work directly.

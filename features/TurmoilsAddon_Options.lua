@@ -121,11 +121,9 @@ function Addon:EnsureOptionsPanel()
     end)
 
     y = y - 28
-    CreateCheckbox(panel, "Hide when idle", y, self.db.global.autoHideWhenIdle, function(v)
-        self.db.global.autoHideWhenIdle = v
-        if not self.echoState.running then
-            self:UpdateTimerDisplay(0, "fresh", false)
-        end
+    CreateCheckbox(panel, "Hide out of combat", y, self.db.global.hideOutOfCombat, function(v)
+        self.db.global.hideOutOfCombat = v
+        if self.ApplyCombatVisibility then self:ApplyCombatVisibility() end
     end)
 
     y = y - 28

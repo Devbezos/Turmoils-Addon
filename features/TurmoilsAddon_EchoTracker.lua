@@ -18,6 +18,11 @@
 -- release it - a WoW client quirk. Addon.CONSTANTS.empowerSpellIDs flags
 -- those, so SUCCEEDED is ignored for them and UNIT_SPELLCAST_EMPOWER_STOP is
 -- used instead, which fires on release/cast-completion.
+--
+-- Also listens for PLAYER_REGEN_DISABLED/ENABLED (combat start/end) purely
+-- to drive Addon:ApplyCombatVisibility() (see TurmoilsAddon_TimerFrame.lua)
+-- - unrelated to Echo state, just piggybacking on the same event frame
+-- since it's already only registered while Preservation is active.
 local addonName = ...
 local Addon = _G[addonName]
 if not Addon then return end
@@ -69,6 +74,11 @@ local function ProcessSpellCast(spellID, now)
 end
 
 local function OnTrackingEvent(_frame, eventName, unit, _castGUID, spellID, deployed)
+    if eventName == "PLAYER_REGEN_DISABLED" or eventName == "PLAYER_REGEN_ENABLED" then
+        if Addon.ApplyCombatVisibility then Addon:ApplyCombatVisibility() end
+        return
+    end
+
     if unit ~= "player" or not spellID then return end
 
     if eventName == "UNIT_SPELLCAST_SUCCEEDED" then
@@ -89,6 +99,8 @@ function Addon:ActivateTracking()
     trackingFrame = trackingFrame or CreateFrame("Frame")
     trackingFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
     trackingFrame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_STOP")
+    trackingFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+    trackingFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
     trackingFrame:SetScript("OnEvent", OnTrackingEvent)
 end
 

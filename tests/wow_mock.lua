@@ -105,6 +105,7 @@ function Harness.installGlobals()
     Harness.unitClassToken = "EVOKER"
     Harness.specIndex = 1
     Harness.specID = 1468 -- Preservation
+    Harness.inCombat = false
 
     _G.wipe = function(tbl) for key in pairs(tbl) do tbl[key] = nil end return tbl end
     _G.CreateFrame = function(objectType, name, parent)
@@ -141,6 +142,7 @@ function Harness.installGlobals()
     end
     _G.GetSpecialization = function() return Harness.specIndex end
     _G.GetSpecializationInfo = function() return Harness.specID end
+    _G.InCombatLockdown = function() return Harness.inCombat end
 
     _G.GetLocale = function() return "enUS" end
 end

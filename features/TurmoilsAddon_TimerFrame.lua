@@ -2,8 +2,9 @@
 -- The little on-screen timer: a movable, lockable, resizable, scalable
 -- button that counts down from Addon.db.global.echoDuration and shows a
 -- shrinking freshness bar, with a soft flash on apply and on consume.
--- Position/scale persist via LibWindow-1.1; lock state, size, and scale
--- live in the AceDB SavedVariables. Width/height and scale are independent
+-- Position/scale persist via LibWindow-1.1; lock state, size, scale, and
+-- combat-only visibility live in the AceDB SavedVariables. Width/height
+-- and scale are independent
 -- controls (see Options: "Width"/"Height" vs "Scale") - size changes the
 -- frame's actual footprint (useful when slotting it next to other UI where
 -- scaling everything, including the border/font, doesn't fit), while scale
@@ -48,19 +49,31 @@ function Addon:PlayEchoFlash(kind)
     frame:SetScript("OnUpdate", OnFlashUpdate)
 end
 
+-- Shows/hides the frame purely based on combat state and the "Hide out of
+-- combat" option - independent of the running/idle countdown visuals in
+-- UpdateTimerDisplay below. Also called directly from
+-- TurmoilsAddon_EchoTracker.lua on PLAYER_REGEN_DISABLED/ENABLED, so combat
+-- entry/exit un-hides or hides it immediately rather than waiting for the
+-- next cast.
+function Addon:ApplyCombatVisibility()
+    if not frame then return end
+    if self.db.global.hideOutOfCombat and not InCombatLockdown() then
+        frame:Hide()
+    else
+        frame:Show()
+    end
+end
+
 -- running == false means idle (remaining is always 0 in that case).
 -- remaining counts DOWN from Addon.db.global.echoDuration to 0 and then
 -- holds there (it does not auto-reset - only an actual consume does that,
 -- see EchoLogic.HandleSpellCast).
 function Addon:UpdateTimerDisplay(remaining, tier, running)
     if not frame then return end
+    self:ApplyCombatVisibility()
+    if not frame:IsShown() then return end
 
     if not running then
-        if self.db.global.autoHideWhenIdle then
-            frame:Hide()
-            return
-        end
-        frame:Show()
         frame:SetAlpha(0.55)
         timeText:SetText("--")
         timeText:SetTextColor(COLORS.idle.r, COLORS.idle.g, COLORS.idle.b)
@@ -68,7 +81,6 @@ function Addon:UpdateTimerDisplay(remaining, tier, running)
         return
     end
 
-    frame:Show()
     frame:SetAlpha(1)
     local c = COLORS[tier] or COLORS.fresh
     timeText:SetFormattedText("%.1fs", remaining)
@@ -183,7 +195,6 @@ end
 
 function Addon:ShowTimerFrame()
     self:EnsureTimerFrame()
-    frame:Show()
     self:UpdateTimerDisplay(0, "fresh", false)
 end
 
