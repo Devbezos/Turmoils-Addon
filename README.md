@@ -23,11 +23,15 @@ completely invisible on every other class and spec.
 
 - The frame is draggable by default: left-click-drag to move it.
 - Right-click it (or run `/turmoil`) to open the options panel: lock
-  position, width/height, scale, hide out of combat, a sound on consume,
-  and the countdown duration. Width/height and scale are independent - resize
-  it to fit a tight spot without the border/font scaling along with it, or
-  use scale to just magnify the whole thing uniformly.
-- `/turmoil lock`, `/turmoil unlock`, `/turmoil reset` also work directly.
+  position, a manual hide toggle, hide out of combat, hide outside raid,
+  width/height, scale, a sound on consume, and the countdown duration.
+  Width/height and scale are independent - resize it to fit a tight spot
+  without the border/font scaling along with it, or use scale to just
+  magnify the whole thing uniformly.
+- `/turmoil lock`, `/turmoil unlock`, `/turmoil reset`, `/turmoil hide`,
+  and `/turmoil show` all work directly without opening options.
+  `hide`/`show` are handy since it's really only useful in a raid -
+  "Hide outside raid" does the same thing automatically.
 
 ## How it works
 

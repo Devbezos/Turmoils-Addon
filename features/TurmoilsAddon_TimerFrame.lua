@@ -3,8 +3,8 @@
 -- button that counts down from Addon.db.global.echoDuration and shows a
 -- shrinking freshness bar, with a soft flash on apply and on consume.
 -- Position/scale persist via LibWindow-1.1; lock state, size, scale, and
--- combat-only visibility live in the AceDB SavedVariables. Width/height
--- and scale are independent
+-- the visibility gates (manual hide, combat-only, raid-only) live in the
+-- AceDB SavedVariables. Width/height and scale are independent
 -- controls (see Options: "Width"/"Height" vs "Scale") - size changes the
 -- frame's actual footprint (useful when slotting it next to other UI where
 -- scaling everything, including the border/font, doesn't fit), while scale
@@ -49,19 +49,30 @@ function Addon:PlayEchoFlash(kind)
     frame:SetScript("OnUpdate", OnFlashUpdate)
 end
 
--- Shows/hides the frame purely based on combat state and the "Hide out of
--- combat" option - independent of the running/idle countdown visuals in
--- UpdateTimerDisplay below. Also called directly from
--- TurmoilsAddon_EchoTracker.lua on PLAYER_REGEN_DISABLED/ENABLED, so combat
--- entry/exit un-hides or hides it immediately rather than waiting for the
--- next cast.
-function Addon:ApplyCombatVisibility()
+-- Shows/hides the frame based on the manual hide toggle plus the "Hide out
+-- of combat" / "Hide outside raid" options - independent of the
+-- running/idle countdown visuals in UpdateTimerDisplay below. Manual hide
+-- wins outright; the combat/raid checks are each independent (either one
+-- being unmet hides it). Also called directly from
+-- TurmoilsAddon_EchoTracker.lua on PLAYER_REGEN_DISABLED/ENABLED/
+-- GROUP_ROSTER_UPDATE, so combat/raid entry/exit updates visibility
+-- immediately rather than waiting for the next cast.
+function Addon:ApplyVisibilityGates()
     if not frame then return end
+
+    if self.db.global.manuallyHidden then
+        frame:Hide()
+        return
+    end
     if self.db.global.hideOutOfCombat and not InCombatLockdown() then
         frame:Hide()
-    else
-        frame:Show()
+        return
     end
+    if self.db.global.hideOutsideRaid and not IsInRaid() then
+        frame:Hide()
+        return
+    end
+    frame:Show()
 end
 
 -- running == false means idle (remaining is always 0 in that case).
@@ -70,7 +81,7 @@ end
 -- see EchoLogic.HandleSpellCast).
 function Addon:UpdateTimerDisplay(remaining, tier, running)
     if not frame then return end
-    self:ApplyCombatVisibility()
+    self:ApplyVisibilityGates()
     if not frame:IsShown() then return end
 
     if not running then

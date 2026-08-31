@@ -8,7 +8,7 @@ local addonName = ...
 local Addon = _G[addonName]
 if not Addon then return end
 
-local PANEL_WIDTH, PANEL_HEIGHT = 260, 400
+local PANEL_WIDTH, PANEL_HEIGHT = 260, 460
 
 local panel
 
@@ -121,9 +121,21 @@ function Addon:EnsureOptionsPanel()
     end)
 
     y = y - 28
+    CreateCheckbox(panel, "Hidden", y, self.db.global.manuallyHidden, function(v)
+        self.db.global.manuallyHidden = v
+        if self.ApplyVisibilityGates then self:ApplyVisibilityGates() end
+    end)
+
+    y = y - 28
     CreateCheckbox(panel, "Hide out of combat", y, self.db.global.hideOutOfCombat, function(v)
         self.db.global.hideOutOfCombat = v
-        if self.ApplyCombatVisibility then self:ApplyCombatVisibility() end
+        if self.ApplyVisibilityGates then self:ApplyVisibilityGates() end
+    end)
+
+    y = y - 28
+    CreateCheckbox(panel, "Hide outside raid", y, self.db.global.hideOutsideRaid, function(v)
+        self.db.global.hideOutsideRaid = v
+        if self.ApplyVisibilityGates then self:ApplyVisibilityGates() end
     end)
 
     y = y - 28
@@ -176,6 +188,8 @@ end
 -- /turmoil lock       lock the timer frame in place
 -- /turmoil unlock     unlock it so it can be dragged
 -- /turmoil reset      snap it back to the default position
+-- /turmoil hide       hide the timer frame until /turmoil show
+-- /turmoil show       un-hide it (also clears "Hidden" in options)
 function Addon:RegisterConsoleCommands()
     self:RegisterChatCommand("turmoil", function(msg)
         msg = tostring(msg or ""):lower():match("^%s*(.-)%s*$")
@@ -188,6 +202,14 @@ function Addon:RegisterConsoleCommands()
         elseif msg == "reset" then
             self:ResetFramePosition()
             self:Print("Position reset.")
+        elseif msg == "hide" then
+            self.db.global.manuallyHidden = true
+            if self.ApplyVisibilityGates then self:ApplyVisibilityGates() end
+            self:Print("Hidden. /turmoil show to bring it back.")
+        elseif msg == "show" then
+            self.db.global.manuallyHidden = false
+            if self.ApplyVisibilityGates then self:ApplyVisibilityGates() end
+            self:Print("Shown.")
         else
             self:ToggleOptions()
         end

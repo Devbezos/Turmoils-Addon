@@ -106,6 +106,7 @@ function Harness.installGlobals()
     Harness.specIndex = 1
     Harness.specID = 1468 -- Preservation
     Harness.inCombat = false
+    Harness.inRaid = false
 
     _G.wipe = function(tbl) for key in pairs(tbl) do tbl[key] = nil end return tbl end
     _G.CreateFrame = function(objectType, name, parent)
@@ -143,6 +144,7 @@ function Harness.installGlobals()
     _G.GetSpecialization = function() return Harness.specIndex end
     _G.GetSpecializationInfo = function() return Harness.specID end
     _G.InCombatLockdown = function() return Harness.inCombat end
+    _G.IsInRaid = function() return Harness.inRaid end
 
     _G.GetLocale = function() return "enUS" end
 end

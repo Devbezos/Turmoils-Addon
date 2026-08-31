@@ -1,8 +1,8 @@
 -- Exercises TurmoilsAddon_EchoTracker.lua's WoW-facing glue: event
--- registration, filtering by unit, the Empower-spell routing quirk, combat
--- state routing, and the polling tick it schedules while the countdown is
--- running. The state-machine decisions themselves are covered exhaustively
--- in echo_logic_test.lua - this file is about the wiring.
+-- registration, filtering by unit, the Empower-spell routing quirk,
+-- combat/raid state routing, and the polling tick it schedules while the
+-- countdown is running. The state-machine decisions themselves are covered
+-- exhaustively in echo_logic_test.lua - this file is about the wiring.
 local Test = _G.TA_TEST
 local Harness = _G.TA_HARNESS
 
@@ -27,7 +27,7 @@ end
 function Addon:OnEchoEvent(event)
     echoEvents[#echoEvents + 1] = event
 end
-function Addon:ApplyCombatVisibility()
+function Addon:ApplyVisibilityGates()
     combatVisibilityCalls = combatVisibilityCalls + 1
 end
 
@@ -37,20 +37,22 @@ Harness.load(addonName, "features/TurmoilsAddon_EchoTracker.lua")
 Addon:ActivateTracking()
 local trackingFrame = Harness.findFrameWithEvent("UNIT_SPELLCAST_SUCCEEDED")
 
-Test.case("ActivateTracking registers listeners for cast events and combat state", function()
+Test.case("ActivateTracking registers listeners for cast events, combat, and raid state", function()
     Test.truthy(trackingFrame, "expected a frame registered for UNIT_SPELLCAST_SUCCEEDED")
     Test.truthy(trackingFrame:IsEventRegistered("UNIT_SPELLCAST_EMPOWER_STOP"))
     Test.truthy(trackingFrame:IsEventRegistered("PLAYER_REGEN_DISABLED"))
     Test.truthy(trackingFrame:IsEventRegistered("PLAYER_REGEN_ENABLED"))
+    Test.truthy(trackingFrame:IsEventRegistered("GROUP_ROSTER_UPDATE"))
 end)
 
-Test.case("entering/leaving combat calls ApplyCombatVisibility without touching Echo state", function()
+Test.case("combat/raid state changes call ApplyVisibilityGates without touching Echo state", function()
     local callsBefore = combatVisibilityCalls
     local runningBefore = Addon.echoState.running
     local eventCountBefore = #echoEvents
     trackingFrame:Fire("PLAYER_REGEN_DISABLED")
     trackingFrame:Fire("PLAYER_REGEN_ENABLED")
-    Test.equal(combatVisibilityCalls, callsBefore + 2)
+    trackingFrame:Fire("GROUP_ROSTER_UPDATE")
+    Test.equal(combatVisibilityCalls, callsBefore + 3)
     Test.equal(Addon.echoState.running, runningBefore)
     Test.equal(#echoEvents, eventCountBefore)
 end)
@@ -148,5 +150,6 @@ Test.case("DeactivateTracking unregisters events and clears state", function()
     Test.falsy(trackingFrame:IsEventRegistered("UNIT_SPELLCAST_EMPOWER_STOP"))
     Test.falsy(trackingFrame:IsEventRegistered("PLAYER_REGEN_DISABLED"))
     Test.falsy(trackingFrame:IsEventRegistered("PLAYER_REGEN_ENABLED"))
+    Test.falsy(trackingFrame:IsEventRegistered("GROUP_ROSTER_UPDATE"))
     Test.falsy(Addon.echoState.running)
 end)

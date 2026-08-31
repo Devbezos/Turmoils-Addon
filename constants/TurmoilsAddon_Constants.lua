@@ -50,6 +50,8 @@ TurmoilsAddon_CONSTANTS = {
             frameWidth = 132,
             frameHeight = 54,
             hideOutOfCombat = false,
+            hideOutsideRaid = false,
+            manuallyHidden = false,
             soundOnConsume = false,
             echoDuration = 20, -- seconds; the countdown starts here and only resets on an actual consume
         },
