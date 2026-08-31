@@ -2,7 +2,7 @@
 ## Title: Turmoil's Addon
 ## Notes: Starts a timer when you cast Echo, resets it to 0 when you consume it. Made for a Preservation Evoker.
 ## Author: A guildmate
-## Version: 1.0.7
+## Version: 1.0.8
 ## SavedVariables: TurmoilsAddonDB
 
 # Libraries
