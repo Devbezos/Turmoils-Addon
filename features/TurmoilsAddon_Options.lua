@@ -23,6 +23,16 @@ local function CreateCheckbox(parent, labelText, y, initial, onChange)
     return cb
 end
 
+-- Number of decimal places to display for a given step size (0.05 -> 2,
+-- 1 -> 0), so the value label reads like "0.85" instead of a long raw float
+-- (sliders don't report perfectly step-quantized values - see RoundToStep).
+local function DecimalPlacesFor(step)
+    if not step or step <= 0 or step >= 1 then return 0 end
+    local text = tostring(step)
+    local dot = text:find(".", 1, true)
+    return dot and (#text - dot) or 0
+end
+
 -- A minimal hand-built slider (label above, live value to the right) rather
 -- than a Blizzard slider template, so we're not depending on template
 -- sub-region names that have shifted across client versions.
@@ -42,9 +52,23 @@ local function CreateSlider(parent, labelText, y, minValue, maxValue, step, init
     label:SetPoint("BOTTOMLEFT", track, "TOPLEFT", 0, 2)
     label:SetText(labelText)
 
+    local decimals = DecimalPlacesFor(step)
+    local function FormatValue(value)
+        return string.format("%." .. decimals .. "f", value)
+    end
+    -- Sliders don't hand back perfectly step-quantized values (mouse
+    -- position maps to a raw float), so snap to the nearest step multiple
+    -- ourselves - both for the stored/applied value and the label text.
+    local function RoundToStep(value)
+        if not step or step <= 0 then return value end
+        return math.floor(value / step + 0.5) * step
+    end
+
+    initial = RoundToStep(initial)
+
     local valueText = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     valueText:SetPoint("LEFT", track, "RIGHT", 8, 0)
-    valueText:SetText(tostring(initial))
+    valueText:SetText(FormatValue(initial))
 
     local slider = CreateFrame("Slider", nil, track)
     slider:SetOrientation("HORIZONTAL")
@@ -54,8 +78,8 @@ local function CreateSlider(parent, labelText, y, minValue, maxValue, step, init
     slider:SetValueStep(step)
     slider:SetValue(initial)
     slider:SetScript("OnValueChanged", function(_, value)
-        if step and step >= 1 then value = math.floor(value + 0.5) end
-        valueText:SetText(tostring(value))
+        value = RoundToStep(value)
+        valueText:SetText(FormatValue(value))
         onChange(value)
     end)
 
