@@ -113,7 +113,11 @@ function Addon:OnEchoEvent(event)
         self:UpdateTimerDisplay(0, "fresh", false)
         self:PlayEchoFlash("consumed")
         if self.db.global.soundOnConsume then
-            PlaySound(SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or 856, "SFX")
+            -- "Master", not "SFX": many raiders mute the Sound Effects
+            -- channel specifically to cut down on ability-sound clutter,
+            -- which would silently swallow this - addon alerts belong on
+            -- Master so they aren't at the mercy of that.
+            PlaySound(SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or 856, "Master")
         end
     end
     -- "consumed-idle": nothing was running, so nothing to show - a no-op
